@@ -288,6 +288,36 @@ describe("Events", function() {
 
 		});
 
+		describe("unsubscribeAll", function() {
+
+			beforeEach(function() {
+				this.dispatcher = new Events.Dispatcher();
+			});
+
+			afterEach(function() {
+				this.dispatcher.destructor();
+			});
+
+			it("removes all handlers for a given object", function() {
+				var context = {
+					method1: function() {},
+					method2: function() {}
+				};
+
+				spyOn(context, "method1");
+				spyOn(context, "method2");
+
+				this.dispatcher.subscribe("a", context, "method1");
+				this.dispatcher.subscribe("b", context, "method2");
+
+				this.dispatcher.unsubscribeAll(context);
+
+				expect(this.dispatcher.subscribers.a.length).toEqual(0);
+				expect(this.dispatcher.subscribers.b.length).toEqual(0);
+			});
+
+		});
+
 	});
 
 });
