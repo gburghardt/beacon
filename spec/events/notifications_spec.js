@@ -2,22 +2,22 @@ describe("Events", function() {
 
 	describe("Notifications", function() {
 
-		describe("compileNotifications", function() {
+		describe("_compileNotifications", function() {
 
 			it("creates an empty compiled notifications object if a class does not define a notifications object", function() {
 				var TestClass = Object.extend({
 					includes: Events.Notifications
 				});
 
-				expect(TestClass.prototype.hasOwnProperty("compiledNotifications")).toEqual(false);
+				expect(TestClass.prototype.hasOwnProperty("_compiledNotifications")).toEqual(false);
 
 				var o = new TestClass();
-				expect(TestClass.prototype.hasOwnProperty("compiledNotifications")).toEqual(false);
+				expect(TestClass.prototype.hasOwnProperty("_compiledNotifications")).toEqual(false);
 
-				o.initNotifications();
+				o._initNotifications();
 
-				expect(TestClass.prototype.hasOwnProperty("compiledNotifications")).toEqual(true);
-				expect(TestClass.prototype.compiledNotifications).toBeEmptyObject();
+				expect(TestClass.prototype.hasOwnProperty("_compiledNotifications")).toEqual(true);
+				expect(TestClass.prototype._compiledNotifications).toBeEmptyObject();
 			});
 
 			it("compiles notifications defined in a class", function() {
@@ -36,10 +36,10 @@ describe("Events", function() {
 				});
 			
 				var o = new TestClass();
-				o.initNotifications();
-				var notifications = TestClass.prototype.compiledNotifications;
+				o._initNotifications();
+				var notifications = TestClass.prototype._compiledNotifications;
 
-				expect(TestClass.prototype.hasOwnProperty("compiledNotifications")).toEqual(true);
+				expect(TestClass.prototype.hasOwnProperty("_compiledNotifications")).toEqual(true);
 				expect( notifications.foo.join() ).toEqual("add,check");
 				expect( notifications.bar.join() ).toEqual("validate");
 			});
@@ -76,20 +76,20 @@ describe("Events", function() {
 				var obj2 = new ParentClass();
 				var notifications1, notifications2;
 
-				expect(ParentClass.prototype.hasOwnProperty("compiledNotifications")).toEqual(false);
-				expect(ChildClass.prototype.hasOwnProperty("compiledNotifications")).toEqual(false);
+				expect(ParentClass.prototype.hasOwnProperty("_compiledNotifications")).toEqual(false);
+				expect(ChildClass.prototype.hasOwnProperty("_compiledNotifications")).toEqual(false);
 
-				obj1.initNotifications();
-				notifications1 = obj1.compiledNotifications;
+				obj1._initNotifications();
+				notifications1 = obj1._compiledNotifications;
 
-				expect(ParentClass.prototype.hasOwnProperty("compiledNotifications")).toEqual(false);
-				expect(ChildClass.prototype.hasOwnProperty("compiledNotifications")).toEqual(true);
+				expect(ParentClass.prototype.hasOwnProperty("_compiledNotifications")).toEqual(false);
+				expect(ChildClass.prototype.hasOwnProperty("_compiledNotifications")).toEqual(true);
 
-				obj2.initNotifications();
-				notifications2 = obj2.compiledNotifications;
+				obj2._initNotifications();
+				notifications2 = obj2._compiledNotifications;
 
-				expect(ParentClass.prototype.hasOwnProperty("compiledNotifications")).toEqual(true);
-				expect(ChildClass.prototype.hasOwnProperty("compiledNotifications")).toEqual(true);
+				expect(ParentClass.prototype.hasOwnProperty("_compiledNotifications")).toEqual(true);
+				expect(ChildClass.prototype.hasOwnProperty("_compiledNotifications")).toEqual(true);
 
 				expect( notifications1.beforeSave.join()    ).toEqual("checkRequired,checkSpelling,generateTitle");
 				expect( notifications1.afterSave.join()     ).toEqual("clearForm,sendEmail,showConfirmation");
@@ -102,7 +102,7 @@ describe("Events", function() {
 
 		});
 
-		describe("initNotifications", function() {
+		describe("_initNotifications", function() {
 
 			it("sets up an empty listeners property", function() {
 				var TestClass = Object.extend({
@@ -110,7 +110,7 @@ describe("Events", function() {
 				});
 
 				var o = new TestClass();
-				o.initNotifications();
+				o._initNotifications();
 
 				expect(o.notificationListeners).toBeEmptyObject();
 			});
@@ -120,14 +120,14 @@ describe("Events", function() {
 					includes: Events.Notifications
 				});
 
-				expect(TestClass.prototype.hasOwnProperty("compiledNotifications")).toEqual(false);
+				expect(TestClass.prototype.hasOwnProperty("_compiledNotifications")).toEqual(false);
 
 				var o = new TestClass();
-				spyOn(o, "compileNotifications").andCallThrough();
-				o.initNotifications();
+				spyOn(o, "_compileNotifications").andCallThrough();
+				o._initNotifications();
 
-				expect(o.compileNotifications).wasCalled();
-				expect(TestClass.prototype.hasOwnProperty("compiledNotifications")).toEqual(true);
+				expect(o._compileNotifications).wasCalled();
+				expect(TestClass.prototype.hasOwnProperty("_compiledNotifications")).toEqual(true);
 			});
 
 			it("does not recompile notifications after the first instance is instantiated", function() {
@@ -138,14 +138,14 @@ describe("Events", function() {
 				var obj1 = new TestClass();
 				var obj2 = new TestClass();
 
-				spyOn(obj1, "compileNotifications").andCallThrough();
-				spyOn(obj2, "compileNotifications").andCallThrough();
+				spyOn(obj1, "_compileNotifications").andCallThrough();
+				spyOn(obj2, "_compileNotifications").andCallThrough();
 
-				obj1.initNotifications();
-				obj2.initNotifications();
+				obj1._initNotifications();
+				obj2._initNotifications();
 
-				expect(obj1.compileNotifications).wasCalled();
-				expect(obj2.compileNotifications).wasNotCalled();
+				expect(obj1._compileNotifications).wasCalled();
+				expect(obj2._compileNotifications).wasNotCalled();
 			});
 
 			it("adds notification listeners from the compiled notifications", function() {
@@ -164,23 +164,23 @@ describe("Events", function() {
 
 				var o = new TestClass();
 				spyOn(o, "listen").andCallThrough();
-				o.initNotifications();
+				o._initNotifications();
 
 				expect(o.listen).wasCalledWith("beforeSave", o, "foo");
 				expect(o.listen).wasCalledWith("afterSave", o, "bar");
 				expect(o.listen).wasCalledWith("afterSave", o, "baz");
 			});
 
-			it("calls setUpNotifications", function() {
+			it("calls _setUpNotifications", function() {
 				var TestClass = Object.extend({
 					includes: Events.Notifications
 				});
 
 				var o = new TestClass();
-				spyOn(o, "setUpNotifications").andCallThrough();
-				o.initNotifications();
+				spyOn(o, "_setUpNotifications").andCallThrough();
+				o._initNotifications();
 
-				expect(o.setUpNotifications).wasCalled();
+				expect(o._setUpNotifications).wasCalled();
 			});
 
 		});

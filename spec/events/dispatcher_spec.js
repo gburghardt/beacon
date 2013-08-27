@@ -16,7 +16,7 @@ describe("Events", function() {
 				var fn = function() {};
 
 				this.dispatcher.subscribe("foo", fn);
-				var subscribers = this.dispatcher.subscribers;
+				var subscribers = this.dispatcher._subscribers;
 
 				expect(subscribers.foo[0].context).toBeNull();
 				expect(subscribers.foo[0].callback).toBe(fn);
@@ -28,7 +28,7 @@ describe("Events", function() {
 				var context = {};
 
 				this.dispatcher.subscribe("foo", context, fn);
-				var subscribers = this.dispatcher.subscribers;
+				var subscribers = this.dispatcher._subscribers;
 
 				expect(subscribers.foo[0].context).toBe(context);
 				expect(subscribers.foo[0].callback).toBe(fn);
@@ -41,7 +41,7 @@ describe("Events", function() {
 				};
 
 				this.dispatcher.subscribe("foo", context, "bar");
-				var subscribers = this.dispatcher.subscribers;
+				var subscribers = this.dispatcher._subscribers;
 
 				expect(subscribers.foo[0].context).toBe(context);
 				expect(subscribers.foo[0].callback).toBe("bar");
@@ -217,10 +217,10 @@ describe("Events", function() {
 				};
 
 				this.dispatcher.subscribe("test", fn);
-				expect(this.dispatcher.subscribers.test.length).toEqual(1);
+				expect(this.dispatcher._subscribers.test.length).toEqual(1);
 
 				this.dispatcher.unsubscribe("test", fn);
-				expect(this.dispatcher.subscribers.test.length).toEqual(0);
+				expect(this.dispatcher._subscribers.test.length).toEqual(0);
 
 				this.dispatcher.publish("test", {}, 10);
 				expect(fnCalled).toBeFalse();
@@ -234,10 +234,10 @@ describe("Events", function() {
 				spyOn(context, "foo");
 
 				this.dispatcher.subscribe("test", context, context.foo);
-				expect(this.dispatcher.subscribers.test.length).toEqual(1);
+				expect(this.dispatcher._subscribers.test.length).toEqual(1);
 
 				this.dispatcher.unsubscribe("test", context, context.foo);
-				expect(this.dispatcher.subscribers.test.length).toEqual(0);
+				expect(this.dispatcher._subscribers.test.length).toEqual(0);
 
 				this.dispatcher.publish("test", {}, 10);
 				expect(context.foo).wasNotCalled();
@@ -254,10 +254,10 @@ describe("Events", function() {
 
 				this.dispatcher.subscribe("test", context, "handleTest");
 				this.dispatcher.subscribe("test", context, "handleSomethingElse");
-				expect(this.dispatcher.subscribers.test.length).toEqual(2);
+				expect(this.dispatcher._subscribers.test.length).toEqual(2);
 
 				this.dispatcher.unsubscribe("test", context, "handleTest");
-				expect(this.dispatcher.subscribers.test.length).toEqual(1);
+				expect(this.dispatcher._subscribers.test.length).toEqual(1);
 
 				this.dispatcher.publish("test", {}, 10);
 				expect(context.handleTest).wasNotCalled();
@@ -275,10 +275,10 @@ describe("Events", function() {
 
 				this.dispatcher.subscribe("test", context, "method1");
 				this.dispatcher.subscribe("test", context, "method2");
-				expect(this.dispatcher.subscribers.test.length).toEqual(2);
+				expect(this.dispatcher._subscribers.test.length).toEqual(2);
 
 				this.dispatcher.unsubscribe("test", context);
-				expect(this.dispatcher.subscribers.test.length).toEqual(0);
+				expect(this.dispatcher._subscribers.test.length).toEqual(0);
 
 				this.dispatcher.publish("test", {}, 10);
 
@@ -312,8 +312,8 @@ describe("Events", function() {
 
 				this.dispatcher.unsubscribeAll(context);
 
-				expect(this.dispatcher.subscribers.a.length).toEqual(0);
-				expect(this.dispatcher.subscribers.b.length).toEqual(0);
+				expect(this.dispatcher._subscribers.a.length).toEqual(0);
+				expect(this.dispatcher._subscribers.b.length).toEqual(0);
 			});
 
 		});
