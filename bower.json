@@ -1,7 +1,9 @@
 {
 	"name": "Events",
 	"description": "Events provides JavaScript with a general purpose application event framework for global application events as well as notifications targeting only certain objects.",
-	"author": "Greg Burghardt <greg_burghardt@yahoo.com>",
+	"authors": [
+		"Greg Burghardt <greg_burghardt@yahoo.com>"
+	],
 	"homepage": "https://github.com/gburghardt/events",
 	"license": "MIT",
 	"version": "1.0.0",
@@ -15,6 +17,6 @@
 		"lib/events/publisher.js"
 	],
 	"dependencies": {
-		"inherit.js": "1.x"
+		"inherit.js": "1.0.0"
 	}
 }
