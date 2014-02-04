@@ -1,151 +1,158 @@
-// @requires events.js
+Beacon = (function(Beacon) {
 
-Events.Dispatcher = function Dispatcher() {
-	this._subscribers = {};
-};
+	function Dispatcher() {
+		this._subscribers = {};
+	}
 
-Events.Dispatcher.logger = window.console || null;
+	Dispatcher.prototype = {
 
-Events.Dispatcher.prototype = {
+		_subscribers: null,
 
-	_subscribers: null,
+		constructor: Dispatcher,
 
-	constructor: Events.Dispatcher,
+		destructor: function destructor() {
+			if (!this._subscribers) {
+				return;
+			}
 
-	destructor: function destructor() {
-		if (!this._subscribers) {
-			return;
-		}
+			var subscribers = this._subscribers,
+			    subscriber,
+			    eventType,
+			    i, length;
 
-		var _subscribers = this._subscribers, subscriber, eventType, i, length;
+			for (eventType in subscribers) {
+				if (subscribers.hasOwnProperty(eventType)) {
+					for (i = 0, length = subscribers[eventType].length; i < length; i++) {
+						subscriber = subscribers[eventType][i];
+						subscriber.callback = subscriber.context = null;
+					}
 
-		for (eventType in _subscribers) {
-			if (_subscribers.hasOwnProperty(eventType)) {
-				for (i = 0, length = _subscribers[eventType].length; i < length; i++) {
-					subscriber = _subscribers[eventType][i];
-					subscriber.callback = subscriber.context = null;
+					subscribers[eventType] = null;
+				}
+			}
+
+			subscriber = subscribers = this._subscribers = null;
+		},
+
+		_dispatchEvent: function _dispatchEvent(publisher, data, subscribers) {
+			var subscriber,
+			    result,
+			    i = 0,
+			    length = subscribers.length;
+
+			for (i; i < length; i++) {
+				subscriber = subscribers[i];
+
+				if (subscriber.type === "function") {
+					result = subscriber.callback.call(subscriber.context, publisher, data);
+				}
+				else if (subscriber.type === "string") {
+					result = subscriber.context[ subscriber.callback ](publisher, data);
 				}
 
-				_subscribers[eventType] = null;
-			}
-		}
-
-		subscriber = _subscribers = this._subscribers = null;
-	},
-
-	_dispatchEvent: function _dispatchEvent(event, _subscribers) {
-		var subscriber;
-
-		for (var i = 0, length = _subscribers.length; i < length; i++) {
-			subscriber = _subscribers[i];
-
-			if (subscriber.type === "function") {
-				subscriber.callback.call(subscriber.context, event, event.publisher, event.data);
-			}
-			else if (subscriber.type === "string") {
-				subscriber.context[ subscriber.callback ]( event, event.publisher, event.data );
+				if (result === false) {
+					break;
+				}
 			}
 
-			if (event.cancelled) {
-				break;
+			subscribers = subscriber = publisher = data = null;
+
+			return result !== false;
+		},
+
+		publish: function publish(eventType, publisher, data) {
+			if (!this._subscribers[eventType]) {
+				return true;
 			}
-		}
 
-		_subscribers = subscriber = event = null;
-	},
+			var result = this._dispatchEvent(publisher, data, this._subscribers[eventType]);
 
-	publish: function publish(eventType, publisher, data) {
-		if (!this._subscribers[eventType]) {
-			return true;
-		}
+			publisher = data = null;
 
-		var event = new Events.Event(eventType, publisher, data);
-		var _subscribers = this._subscribers[eventType];
-		var cancelled = false;
+			return result;
+		},
 
-		this._dispatchEvent(event, _subscribers);
-		cancelled = event.cancelled;
-		event.destructor();
-
-		event = publisher = data = _subscribers = null;
-
-		return !cancelled;
-	},
-
-	subscribe: function subscribe(eventType, context, callback) {
-		var contextType = typeof context;
-		var callbackType = typeof callback;
-		
-		this._subscribers[eventType] = this._subscribers[eventType] || [];
-		
-		if (contextType === "function") {
-			this._subscribers[eventType].push({
-				context: null,
-				callback: context,
-				type: "function"
-			});
-		}
-		else if (contextType === "object") {
-			if (callbackType === "string" && typeof context[ callback ] !== "function") {
-				throw new Error("Cannot subscribe to " + eventType + " because " + callback + " is not a function");
-			}
-		
-			this._subscribers[eventType].push({
-				context: context || null,
-				callback: callback,
-				type: callbackType
-			});
-		}
-	},
-
-	unsubscribe: function unsubscribe(eventType, context, callback) {
-		if (this._subscribers[eventType]) {
+		subscribe: function subscribe(eventType, context, callback) {
 			var contextType = typeof context;
 			var callbackType = typeof callback;
-			var _subscribers = this._subscribers[eventType];
-			var i = _subscribers.length;
-			var subscriber;
+
+			this._subscribers[eventType] = this._subscribers[eventType] || [];
 
 			if (contextType === "function") {
-				callback = context;
-				context = null;
-				callbackType = "function";
+				this._subscribers[eventType].push({
+					context: null,
+					callback: context,
+					type: "function"
+				});
 			}
-			else if (contextType === "object" && callbackType === "undefined") {
-				callbackType = "any";
-			}
-
-			while (i--) {
-				subscriber = _subscribers[i];
-
-				if (
-				    (callbackType === "any" && subscriber.context === context) ||
-						(subscriber.type === callbackType && subscriber.context === context && subscriber.callback === callback)
-				) {
-					_subscribers.splice(i, 1);
+			else if (contextType === "object") {
+				if (callbackType === "string" && typeof context[ callback ] !== "function") {
+					throw new Error("Cannot subscribe to " + eventType + " because " + callback + " is not a function");
 				}
+
+				this._subscribers[eventType].push({
+					context: context || null,
+					callback: callback,
+					type: callbackType
+				});
 			}
-		}
+		},
 
-		context = callback = _subscribers = subscriber = null;
-	},
+		unsubscribe: function unsubscribe(eventType, context, callback) {
+			var contextType = typeof context,
+			    callbackType = typeof callback,
+			    subscribers = this._subscribers[eventType],
+			    i = _subscribers.length,
+			    subscriber;
 
-	unsubscribeAll: function unsubscribeAll(context) {
-		var type, i, _subscribers;
-
-		for (type in this._subscribers) {
-			if (this._subscribers.hasOwnProperty(type)) {
-				_subscribers = this._subscribers[type];
-				i = _subscribers.length;
+			if (this._subscribers[eventType]) {
+				if (contextType === "function") {
+					callback = context;
+					context = null;
+					callbackType = "function";
+				}
+				else if (contextType === "object" && callbackType === "undefined") {
+					callbackType = "any";
+				}
 
 				while (i--) {
-					if (_subscribers[i].context === context) {
-						_subscribers.splice(i, 1);
+					subscriber = subscribers[i];
+
+					if (
+					    (callbackType === "any" && subscriber.context === context) ||
+						(subscriber.type === callbackType && subscriber.context === context && subscriber.callback === callback)
+					) {
+						subscribers.splice(i, 1);
 					}
 				}
 			}
+
+			context = callback = subscribers = subscriber = null;
+		},
+
+		unsubscribeAll: function unsubscribeAll(context) {
+			var type, i, subscribers;
+
+			for (type in this._subscribers) {
+				if (this._subscribers.hasOwnProperty(type)) {
+					subscribers = this._subscribers[type];
+					i = subscribers.length;
+
+					while (i--) {
+						if (subscribers[i].context === context) {
+							subscribers.splice(i, 1);
+						}
+					}
+				}
+			}
+
+			context = subscribers = null;
 		}
 
-		context = _subscribers = null;
-	}
-};
+	};
+
+	Beacon.Dispatcher = Dispatcher;
+
+	return Beacon;
+
+})(window.Beacon || {});

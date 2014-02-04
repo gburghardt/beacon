@@ -1,1 +1,1 @@
-var Events = {};
+var Beacon = {};
