@@ -99,13 +99,14 @@ Beacon = (function(Beacon) {
 		},
 
 		unsubscribe: function unsubscribe(eventType, context, callback) {
-			var contextType = typeof context,
-			    callbackType = typeof callback,
-			    subscribers = this._subscribers[eventType],
-			    i = _subscribers.length,
-			    subscriber;
 
 			if (this._subscribers[eventType]) {
+				var contextType = typeof context,
+				    callbackType = typeof callback,
+				    subscribers = this._subscribers[eventType],
+				    i = subscribers.length,
+				    subscriber;
+
 				if (contextType === "function") {
 					callback = context;
 					context = null;
@@ -125,9 +126,11 @@ Beacon = (function(Beacon) {
 						subscribers.splice(i, 1);
 					}
 				}
+
+				subscribers = subscriber = null;
 			}
 
-			context = callback = subscribers = subscriber = null;
+			context = callback = null;
 		},
 
 		unsubscribeAll: function unsubscribeAll(context) {

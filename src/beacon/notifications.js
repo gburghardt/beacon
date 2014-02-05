@@ -4,8 +4,6 @@ Beacon = (function(Beacon) {
 
 	var Notifications = {
 
-		includes: Beacon.ApplicationEvents,
-
 		self: {
 
 			addNotifications: function addNotifications(newNotifications) {

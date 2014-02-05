@@ -1,0 +1,122 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Demo: Beacon</title>
+</head>
+<body>
+
+	<h1>Application Events</h1>
+
+	<form method="get" action="#" id="chores">
+		<p>
+			Chores:
+			<input type="text" name="text">
+			<button type="submit">Complete</button>
+		</p>
+	</form>
+
+	<form method="get" action="#" id="work_tasks">
+		<p>
+			Work Tasks:
+			<input type="text" name="text">
+			<button type="submit">Complete</button>
+		</p>
+	</form>
+
+	<h2 style="clear: both;">Recently Completed Items</h2>
+	<ol id="recent_completed_items"></ol>
+
+	<hr>
+
+	<h1>Notifications</h1>
+
+	<p>
+		Click on the items below to see the selected count change.
+	</p>
+
+	<div id="fruits" style="float: left; margin-right: 3em; width: 300px">
+		<h2>Fruits</h2>
+
+		<ol style="cursor: pointer">
+			<li>Apples</li>
+			<li>Oranges</li>
+			<li>Kiwi</li>
+		</ol>
+
+		<p>
+			<strong>Selected: <span>0</span></strong>
+		</p>
+	</div>
+
+	<div id="colors" style="float: left; width: 300px">
+		<h2>Colors</h2>
+
+		<ol style="cursor: pointer">
+			<li>Red</li>
+			<li>Green</li>
+			<li>Blue</li>
+		</ol>
+
+		<p>
+			<strong>Selected: <span>0</span></strong>
+		</p>
+	</div>
+
+	<h1 style="clear: both">Try this out:</h1>
+
+	<ol>
+		<li>Open the browser console</li>
+		<li>
+			Type <code>Beacon.ApplicationEvents.eventDispatcher</code> into the console and
+			press ENTER. This is the event dispatcher for the whole page.
+		</li>
+		<li>
+			Type <code>Beacon.ApplicationEvents.eventDispatcher._subscribers</code> and press
+			ENTER. This shows all the application event and notification event subscriptions.
+		</li>
+		<li>
+			Now try these:
+<pre>Beacon.ApplicationEvents.eventDispatcher._subscribers["item.completed"][0].context === recentItems
+Beacon.ApplicationEvents.eventDispatcher._subscribers["notifications.4.item.deselected"][0].context === fruits
+fruits.selection._notificationId
+Beacon.ApplicationEvents.eventDispatcher._subscribers["notifications.6.item.deselected"][0].context === colors
+colors.selection._notificationId</pre>
+		</li>
+	</ol>
+
+	<script type="text/javascript" src="../src/beacon.js"></script>
+	<script type="text/javascript" src="../src/beacon/dispatcher.js"></script>
+	<script type="text/javascript" src="../src/beacon/application_events.js"></script>
+	<script type="text/javascript" src="../src/beacon/notifications.js"></script>
+	<script type="text/javascript" src="./demo.js"></script>
+	<script type="text/javascript">
+
+		// Application Events:
+
+		var chores = new TodoList("Chores");
+		var workTasks = new TodoList("Work Tasks");
+		var recentItems = new RecentlyCompletedItems(document.getElementById("recent_completed_items"));
+
+		document.getElementById("chores").onsubmit = function() {
+			chores.complete(this.elements.text.value);
+			this.elements.text.value = "";
+
+			return false;
+		};
+
+		document.getElementById("work_tasks").onsubmit = function() {
+			workTasks.complete(this.elements.text.value);
+			this.elements.text.value = "";
+
+			return false;
+		};
+
+		// Notifications:
+
+		var fruits = new ListManager(document.getElementById("fruits"));
+		var colors = new ListManager(document.getElementById("colors"));
+
+	</script>
+</body>
+</html>

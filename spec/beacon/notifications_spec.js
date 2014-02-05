@@ -1,188 +1,168 @@
-describe("Events", function() {
+describe("Beacon.Notifications", function() {
 
-	describe("Notifications", function() {
+	describe("_compileNotifications", function() {
 
-		describe("_compileNotifications", function() {
+		it("creates an empty compiled notifications object if a class does not define a notifications object", function() {
+			function TestClass() {}
+			Beacon.setup(TestClass);
 
-			it("creates an empty compiled notifications object if a class does not define a notifications object", function() {
-				var TestClass = Object.extend({
-					includes: Events.Notifications
-				});
+			expect(TestClass.prototype.hasOwnProperty("_compiledNotifications")).toBe(false);
 
-				expect(TestClass.prototype.hasOwnProperty("_compiledNotifications")).toEqual(false);
+			var o = new TestClass();
+			expect(TestClass.prototype.hasOwnProperty("_compiledNotifications")).toBe(false);
 
-				var o = new TestClass();
-				expect(TestClass.prototype.hasOwnProperty("_compiledNotifications")).toEqual(false);
+			o._initNotifications();
 
-				o._initNotifications();
-
-				expect(TestClass.prototype.hasOwnProperty("_compiledNotifications")).toEqual(true);
-				expect(TestClass.prototype._compiledNotifications).toBeEmptyObject();
-			});
-
-			it("compiles notifications defined in a class", function() {
-				var TestClass = Object.extend({
-					includes: Events.Notifications,
-			
-					prototype: {
-						notifications: {
-							foo: ["add", "check"],
-							bar: "validate"
-						},
-						add: function() {},
-						check: function() {},
-						validate: function() {}
-					}
-				});
-			
-				var o = new TestClass();
-				o._initNotifications();
-				var notifications = TestClass.prototype._compiledNotifications;
-
-				expect(TestClass.prototype.hasOwnProperty("_compiledNotifications")).toEqual(true);
-				expect( notifications.foo.join() ).toEqual("add,check");
-				expect( notifications.bar.join() ).toEqual("validate");
-			});
-
-			it("merges the notifications from the class hierarchy", function() {
-				var ParentClass = Object.extend({
-					includes: Events.Notifications,
-					prototype: {
-						notifications: {
-							beforeSave: ["checkRequired", "checkSpelling"],
-							afterSave: "clearForm"
-						},
-						checkRequired: function() {},
-						checkSpelling: function() {},
-						clearForm: function() {}
-					}
-				});
-
-				var ChildClass = ParentClass.extend({
-					prototype: {
-						notifications: {
-							beforeSave: "generateTitle",
-							afterSave: ["sendEmail", "showConfirmation"],
-							beforeDestroy: "confirm"
-						},
-						generateTitle: function() {},
-						sendEmail: function() {},
-						showConfirmation: function() {},
-						confirm: function() {}
-					}
-				});
-
-				var obj1 = new ChildClass();
-				var obj2 = new ParentClass();
-				var notifications1, notifications2;
-
-				expect(ParentClass.prototype.hasOwnProperty("_compiledNotifications")).toEqual(false);
-				expect(ChildClass.prototype.hasOwnProperty("_compiledNotifications")).toEqual(false);
-
-				obj1._initNotifications();
-				notifications1 = obj1._compiledNotifications;
-
-				expect(ParentClass.prototype.hasOwnProperty("_compiledNotifications")).toEqual(false);
-				expect(ChildClass.prototype.hasOwnProperty("_compiledNotifications")).toEqual(true);
-
-				obj2._initNotifications();
-				notifications2 = obj2._compiledNotifications;
-
-				expect(ParentClass.prototype.hasOwnProperty("_compiledNotifications")).toEqual(true);
-				expect(ChildClass.prototype.hasOwnProperty("_compiledNotifications")).toEqual(true);
-
-				expect( notifications1.beforeSave.join()    ).toEqual("checkRequired,checkSpelling,generateTitle");
-				expect( notifications1.afterSave.join()     ).toEqual("clearForm,sendEmail,showConfirmation");
-				expect( notifications1.beforeDestroy.join() ).toEqual("confirm");
-
-				expect( notifications2.beforeSave.join() ).toEqual("checkRequired,checkSpelling");
-				expect( notifications2.afterSave.join()  ).toEqual("clearForm");
-				expect( notifications2.beforeDestroy     ).toBeUndefined();
-			});
-
+			expect(TestClass.prototype.hasOwnProperty("_compiledNotifications")).toBe(true);
+			expect(TestClass.prototype._compiledNotifications).toEqual({});
 		});
 
-		describe("_initNotifications", function() {
+		it("compiles notifications defined in a class", function() {
+			function TestClass() {}
+			TestClass.prototype = {
+				notifications: {
+					foo: ["add", "check"],
+					bar: "validate"
+				},
+				constructor: TestClass,
+				add: function() {},
+				check: function() {},
+				validate: function() {}
+			};
 
-			it("sets up an empty listeners property", function() {
-				var TestClass = Object.extend({
-					includes: Events.Notifications
-				});
+			Beacon.setup(TestClass);
 
-				var o = new TestClass();
-				o._initNotifications();
+			var o = new TestClass();
+			o._initNotifications();
+			var notifications = TestClass.prototype._compiledNotifications;
 
-				expect(o.notificationListeners).toBeEmptyObject();
-			});
+			expect(TestClass.prototype.hasOwnProperty("_compiledNotifications")).toBe(true);
+			expect( notifications.foo.join() ).toBe("add,check");
+			expect( notifications.bar.join() ).toBe("validate");
+		});
 
-			it("compiles notifications the first time a concrete class is instantiated", function() {
-				var TestClass = Object.extend({
-					includes: Events.Notifications
-				});
+		it("merges the notifications from the class hierarchy", function() {
+			function ParentClass() {}
+			ParentClass.prototype = {
+				notifications: {
+					beforeSave: ["checkRequired", "checkSpelling"],
+					afterSave: "clearForm"
+				},
+				constructor: ParentClass,
+				checkRequired: function() {},
+				checkSpelling: function() {},
+				clearForm: function() {}
+			};
 
-				expect(TestClass.prototype.hasOwnProperty("_compiledNotifications")).toEqual(false);
+			function ChildClass() {}
+			ChildClass.prototype = new ParentClass();
+			ChildClass.prototype.notifications = {
+				beforeSave: "generateTitle",
+				afterSave: ["sendEmail", "showConfirmation"],
+				beforeDestroy: "confirm"
+			};
+			ChildClass.prototype.generateTitle = function() {};
+			ChildClass.prototype.sendEmail = function() {};
+			ChildClass.prototype.showConfirmation = function() {};
+			ChildClass.prototype.confirm = function() {};
 
-				var o = new TestClass();
-				spyOn(o, "_compileNotifications").andCallThrough();
-				o._initNotifications();
+			Beacon.setup(ParentClass);
 
-				expect(o._compileNotifications).wasCalled();
-				expect(TestClass.prototype.hasOwnProperty("_compiledNotifications")).toEqual(true);
-			});
+			var obj1 = new ChildClass();
+			var obj2 = new ParentClass();
+			var notifications1, notifications2;
 
-			it("does not recompile notifications after the first instance is instantiated", function() {
-				var TestClass = Object.extend({
-					includes: Events.Notifications
-				});
+			expect(ParentClass.prototype.hasOwnProperty("_compiledNotifications")).toBe(false);
+			expect(ChildClass.prototype.hasOwnProperty("_compiledNotifications")).toBe(false);
 
-				var obj1 = new TestClass();
-				var obj2 = new TestClass();
+			obj1._initNotifications();
+			notifications1 = obj1._compiledNotifications;
 
-				spyOn(obj1, "_compileNotifications").andCallThrough();
-				spyOn(obj2, "_compileNotifications").andCallThrough();
+			expect(ParentClass.prototype.hasOwnProperty("_compiledNotifications")).toBe(false);
+			expect(ChildClass.prototype.hasOwnProperty("_compiledNotifications")).toBe(true);
 
-				obj1._initNotifications();
-				obj2._initNotifications();
+			obj2._initNotifications();
+			notifications2 = obj2._compiledNotifications;
 
-				expect(obj1._compileNotifications).wasCalled();
-				expect(obj2._compileNotifications).wasNotCalled();
-			});
+			expect(ParentClass.prototype.hasOwnProperty("_compiledNotifications")).toBe(true);
+			expect(ChildClass.prototype.hasOwnProperty("_compiledNotifications")).toBe(true);
 
-			it("adds notification listeners from the compiled notifications", function() {
-				var TestClass = Object.extend({
-					includes: Events.Notifications,
-					prototype: {
-						notifications: {
-							beforeSave: "foo",
-							afterSave: ["bar", "baz"]
-						},
-						foo: function() {},
-						bar: function() {},
-						baz: function() {}
-					}
-				});
+			expect( notifications1.beforeSave.join()    ).toBe("checkRequired,checkSpelling,generateTitle");
+			expect( notifications1.afterSave.join()     ).toBe("clearForm,sendEmail,showConfirmation");
+			expect( notifications1.beforeDestroy.join() ).toBe("confirm");
 
-				var o = new TestClass();
-				spyOn(o, "listen").andCallThrough();
-				o._initNotifications();
+			expect( notifications2.beforeSave.join() ).toBe("checkRequired,checkSpelling");
+			expect( notifications2.afterSave.join()  ).toBe("clearForm");
+			expect( notifications2.beforeDestroy     ).toBe(undefined);
+		});
 
-				expect(o.listen).wasCalledWith("beforeSave", o, "foo");
-				expect(o.listen).wasCalledWith("afterSave", o, "bar");
-				expect(o.listen).wasCalledWith("afterSave", o, "baz");
-			});
+	});
 
-			it("calls _setUpNotifications", function() {
-				var TestClass = Object.extend({
-					includes: Events.Notifications
-				});
+	describe("_initNotifications", function() {
 
-				var o = new TestClass();
-				spyOn(o, "_setUpNotifications").andCallThrough();
-				o._initNotifications();
+		it("compiles notifications the first time a concrete class is instantiated", function() {
+			function TestClass() {}
+			Beacon.setup(TestClass);
 
-				expect(o._setUpNotifications).wasCalled();
-			});
+			expect(TestClass.prototype.hasOwnProperty("_compiledNotifications")).toBe(false);
 
+			var o = new TestClass();
+			spyOn(o, "_compileNotifications").and.callThrough();
+			o._initNotifications();
+
+			expect(o._compileNotifications).toHaveBeenCalled();
+			expect(TestClass.prototype.hasOwnProperty("_compiledNotifications")).toBe(true);
+		});
+
+		it("does not recompile notifications after the first instance is instantiated", function() {
+			function TestClass() {}
+			Beacon.setup(TestClass);
+
+			var obj1 = new TestClass();
+			var obj2 = new TestClass();
+
+			spyOn(obj1, "_compileNotifications").and.callThrough();
+			spyOn(obj2, "_compileNotifications").and.callThrough();
+
+			obj1._initNotifications();
+			obj2._initNotifications();
+
+			expect(obj1._compileNotifications).toHaveBeenCalled();
+			expect(obj2._compileNotifications).not.toHaveBeenCalled();
+		});
+
+		it("adds notification listeners from the compiled notifications", function() {
+			function TestClass() {}
+			TestClass.prototype = {
+				notifications: {
+					beforeSave: "foo",
+					afterSave: ["bar", "baz"]
+				},
+				constructor: TestClass,
+				foo: function() {},
+				bar: function() {},
+				baz: function() {}
+			};
+			Beacon.setup(TestClass);
+
+			var o = new TestClass();
+			spyOn(o, "listen").and.callThrough();
+			o._initNotifications();
+
+			expect(o.listen).toHaveBeenCalledWith("beforeSave", o, "foo");
+			expect(o.listen).toHaveBeenCalledWith("afterSave", o, "bar");
+			expect(o.listen).toHaveBeenCalledWith("afterSave", o, "baz");
+		});
+
+		it("calls _setUpNotifications", function() {
+			function TestClass() {}
+			Beacon.setup(TestClass);
+
+			var o = new TestClass();
+			spyOn(o, "_setUpNotifications").and.callThrough();
+			o._initNotifications();
+
+			expect(o._setUpNotifications).toHaveBeenCalled();
 		});
 
 	});
