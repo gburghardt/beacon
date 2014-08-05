@@ -21,26 +21,30 @@ or install it through bower: `bower install beacon`.
 
 Next, include the necessary source files:
 
-    <body>
-        ...
+```html
+<body>
+    ...
 
-        <script src="path/to/beacon.js"></script>
-        <script src="path/to/beacon/dispatcher.js"></script>
-        <script src="path/to/beacon/application_events.js"></script>
-        <script src="path/to/beacon/notifications.js"></script>
-    </body>
+    <script src="path/to/beacon.js"></script>
+    <script src="path/to/beacon/dispatcher.js"></script>
+    <script src="path/to/beacon/application_events.js"></script>
+    <script src="path/to/beacon/notifications.js"></script>
+</body>
+```
 
 Next, you want to set up application events and notifications. To do this,
 you'll have to include the Beacon.ApplicationEvents and Beacon.Notifications
 mixins in all of your existing JavaScript classes:
 
-    function MyClass() {
-        ...
-    }
+```javascript
+function MyClass() {
+    ...
+}
 
-    MyClass.prototype ...
+MyClass.prototype ...
 
-    Beacon.setup(MyClass);
+Beacon.setup(MyClass);
+```
 
 This gives you both Notifications (object to object messages), and Application
 Events (an object broadcasting an event to the whole page).
@@ -62,20 +66,21 @@ Since Application Events broadcast something to your entire application,
 subscribers do not know the exact object that published the event. Take this
 as an example:
 
+```javascript
+MyClass.include(Beacon.ApplicationEvents);
+OtherClass.include(Beacon.ApplicationEvents);
 
-    MyClass.include(Beacon.ApplicationEvents);
-    OtherClass.include(Beacon.ApplicationEvents);
+var a = new MyClass();
+var b = new MyClass();
+var subscriber = new OtherClass();
 
-    var a = new MyClass();
-    var b = new MyClass();
-    var subscriber = new OtherClass();
+subscriber.subscribe("foo", function(publisher, data) {
+    // "publisher" can either be object "a" or "b"
+});
 
-    subscriber.subscribe("foo", function(publisher, data) {
-        // "publisher" can either be object "a" or "b"
-    });
-
-    a.publish("foo", { text: "A" });
-    b.publish("foo", { text: "B" });
+a.publish("foo", { text: "A" });
+b.publish("foo", { text: "B" });
+```
 
 The subscriber listens for an event named "foo". Both objects `a` and `b`
 publish the same event. When the subscriber handler is called, the `publisher`
@@ -92,32 +97,34 @@ completed todo list items. You want both items completed in your "Chores" list
 and the "Work Tasks" list to show up in the box. Since you don't care which
 TODO list notifies you, you want to publish and subscribe to application events:
 
-    function TodoList(type) {
-        this.type = type;
-    }
+```javascript
+function TodoList(type) {
+    this.type = type;
+}
 
-    TodoList.prototype.complete = function(text) {
-        this.publish("item.completed", { text: text });
-    };
+TodoList.prototype.complete = function(text) {
+    this.publish("item.completed", { text: text });
+};
 
-    Beacon.setup(TodoList);
+Beacon.setup(TodoList);
 
-    function RecentlyCompletedItems() {
-        this.subscribe("item.completed", this, "handleItemCompleted");
-    }
+function RecentlyCompletedItems() {
+    this.subscribe("item.completed", this, "handleItemCompleted");
+}
 
-    RecentlyCompletedItems.prototype.handleItemCompleted = function(publisher, data) {
-        alert("Item completed! " + data.text + " (" + publisher.type + ")");
-    };
+RecentlyCompletedItems.prototype.handleItemCompleted = function(publisher, data) {
+    alert("Item completed! " + data.text + " (" + publisher.type + ")");
+};
 
-    Beacon.setup(RecentlyCompletedItems);
+Beacon.setup(RecentlyCompletedItems);
 
-    var chores = new TodoList("Chores");
-    var tasks = new TodoList("Tasks");
-    var recentItems = new RecentlyCompletedItems();
+var chores = new TodoList("Chores");
+var tasks = new TodoList("Tasks");
+var recentItems = new RecentlyCompletedItems();
 
-    chores.complete("Take out the trash");
-    tasks.complete("Email the boss");
+chores.complete("Take out the trash");
+tasks.complete("Email the boss");
+```
 
 Running the code above would result in two alerts:
 
@@ -143,12 +150,14 @@ won't know the exact object instance.
 
 Example:
 
-    MyClass.prototype.foo = function() {
-        var eventName = "MyEvent",
-            data = { foo: "bar" };
+```javascript
+MyClass.prototype.foo = function() {
+    var eventName = "MyEvent",
+        data = { foo: "bar" };
 
-        this.publish(eventName, data);
-    };
+    this.publish(eventName, data);
+};
+```
 
 ### Subscribing to Application Events
 
@@ -167,13 +176,15 @@ name on of a method on `this` that should be invoked when the event occurs.
 
 Example:
 
-    MyClass.prototype.foo = function() {
-        this.subscribe("foo", this, "handleFoo");
-    };
+```javascript
+MyClass.prototype.foo = function() {
+    this.subscribe("foo", this, "handleFoo");
+};
 
-    MyClass.prototype.handleFoo = function(publisher, data) {
-        // process event...
-    };
+MyClass.prototype.handleFoo = function(publisher, data) {
+    // process event...
+};
+```
 
 #### `subscribe(String event, Object context, Function callback)`
 
@@ -187,11 +198,13 @@ a Function object to use as the callback.
 
 Example:
 
-    MyClass.prototype.foo = function() {
-        this.subscribe("foo", this, function(publisher, data) {
-            // process event...
-        });
-    };
+```javascript
+MyClass.prototype.foo = function() {
+    this.subscribe("foo", this, function(publisher, data) {
+        // process event...
+    });
+};
+```
 
 #### `subscribe(String event, Function callback)`
 
@@ -204,12 +217,14 @@ inside the callback refers to the `window` object.
 
 Example:
 
-    MyClass.prototype.foo = function() {
-        this.subscribe("foo", function(publisher, data) {
-            // process event...
-            // "this" is the window object
-        });
-    };
+```javascript
+MyClass.prototype.foo = function() {
+    this.subscribe("foo", function(publisher, data) {
+        // process event...
+        // "this" is the window object
+    });
+};
+```
 
 #### Application Event Handlers
 
