@@ -67,8 +67,8 @@ subscribers do not know the exact object that published the event. Take this
 as an example:
 
 ```javascript
-MyClass.include(Beacon.ApplicationEvents);
-OtherClass.include(Beacon.ApplicationEvents);
+Beacon.setup(MyClass);
+Beacon.setup(OtherClass);
 
 var a = new MyClass();
 var b = new MyClass();
